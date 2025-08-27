@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Trắc nghiệm Kéo Thả</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f3f4f6;
+        }
+        .draggable {
+            cursor: grab;
+            user-select: none;
+            transition: all 0.2s ease-in-out;
+        }
+        .draggable:active {
+            cursor: grabbing;
+        }
+        .dropzone {
+            transition: all 0.2s ease-in-out;
+            border: 2px dashed #d1d5db;
+        }
+        .dropzone.drag-over {
+            border-color: #4f46e5;
+            background-color: #eef2ff;
+        }
+        .correct {
+            background-color: #d1fae5 !important;
+        }
+        .incorrect {
+            background-color: #fee2e2 !important;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 min-h-screen flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+    <div id="app" class="bg-white p-8 rounded-3xl shadow-2xl w-full max-w-4xl">
+        <h1 class="text-3xl font-bold text-center text-gray-800 mb-6">Trắc nghiệm Tiếng Anh Nâng Cao</h1>
+        <p class="text-center text-gray-600 mb-8">Hãy kéo các đáp án vào ô trống để hoàn thành câu hỏi.</p>
+
+        <div id="quiz-container" class="space-y-8">
+            <!-- Câu hỏi sẽ được chèn vào đây bởi JavaScript -->
+        </div>
+
+        <div class="mt-8 flex justify-center space-x-4">
+            <button id="check-btn" class="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2 px-6 rounded-full shadow-lg transition transform hover:scale-105">
+                Kiểm Tra
+            </button>
+            <button id="reset-btn" class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-semibold py-2 px-6 rounded-full shadow-lg transition transform hover:scale-105">
+                Làm Lại
+            </button>
+        </div>
+
+        <div id="result-container" class="mt-8 text-center text-lg font-semibold"></div>
+    </div>
+
+    <script>
+        // Dữ liệu câu hỏi mới
+        const quizData = [
+            { question_number: 1, question: 'Điền vào chỗ trống số (1): I leave ______ home at 8 AM.', option_a: 'A. in', option_b: 'B. at', option_c: 'C. for', option_d: 'D. to', correct_answer: 'C. for', feedback: '"Leave for home" (rời đi để về nhà) là cụm từ đúng.' },
+            { question_number: 2, question: 'Điền vào chỗ trống số (2): I usually walk ______ school.', option_a: 'A. at', option_b: 'B. to', option_c: 'C. on', option_d: 'D. in', correct_answer: 'B. to', feedback: '"Walk to school" (đi bộ đến trường) là cụm từ đúng.' },
+            { question_number: 3, question: 'Điền vào chỗ trống số (3): ______ lunch, I play football with my friends.', option_a: 'A. Before', option_b: 'B. After', option_c: 'C. During', option_d: 'D. At', correct_answer: 'B. After', feedback: '"After lunch" (sau bữa trưa) là cụm từ đúng.' },
+            { question_number: 4, question: 'Điền vào chỗ trống số (4): I\'m very happy to be ______ in a great community.', option_a: 'A. live', option_b: 'B. living', option_c: 'C. lived', option_d: 'D. lives', correct_answer: 'B. living', feedback: '"Be living" là cấu trúc đúng để nói về trạng thái đang sống.' },
+            { question_number: 5, question: 'Điền vào chỗ trống số (5): I can relax ______ watching TV.', option_a: 'A. for', option_b: 'B. by', option_c: 'C. with', option_d: 'D. from', correct_answer: 'B. by', feedback: '"By doing something" (bằng cách làm gì) là cụm từ đúng.' },
+            { question_number: 6, question: 'Điền vào chỗ trống số (6): My family and I went ______ a museum in the city centre.', option_a: 'A. to', option_b: 'B. on', option_c: 'C. in', option_d: 'D. at', correct_answer: 'A. to', feedback: '"Go to" (đi đến) là cụm động từ chỉ hướng.' },
+            { question_number: 7, question: 'Điền vào chỗ trống số (7): It was a very old building ______ a lot of interesting things to see.', option_a: 'A. with', option_b: 'B. on', option_c: 'C. in', option_d: 'D. has', correct_answer: 'A. with', feedback: '"With a lot of" (với rất nhiều) là cụm từ đúng.' },
+            { question_number: 8, question: 'Điền vào chỗ trống số (8): We saw many beautiful paintings ______ famous artists.', option_a: 'A. from', option_b: 'B. with', option_c: 'C. by', option_d: 'D. for', correct_answer: 'C. by', feedback: '"By" (bởi) là giới từ dùng để chỉ tác giả của một tác phẩm.' },
+            { question_number: 9, question: 'Điền vào chỗ trống số (9): I was surprised to find ______ many people there.', option_a: 'A. so', option_b: 'B. such', option_c: 'C. too', option_d: 'D. a', correct_answer: 'A. so', feedback: '"So many" (quá nhiều) là cụm từ đúng.' },
+            { question_number: 10, question: 'Điền vào chỗ trống số (10): The museum was very crowded ______ it was a public holiday.', option_a: 'A. but', option_b: 'B. although', option_c: 'C. because', option_d: 'D. so', correct_answer: 'C. because', feedback: '"Because" (bởi vì) dùng để chỉ nguyên nhân.' },
+            { question_number: 11, question: 'Điền vào chỗ trống số (11): I have played ______ I was eight years old.', option_a: 'A. for', option_b: 'B. since', option_c: 'C. in', option_d: 'D. when', correct_answer: 'B. since', feedback: '"Since" (kể từ khi) dùng với một mốc thời gian trong quá khứ.' },
+            { question_number: 12, question: 'Điền vào chỗ trống số (12): I practice for an hour ______ day.', option_a: 'A. each', option_b: 'B. every', option_c: 'C. the', option_d: 'D. per', correct_answer: 'B. every', feedback: '"Every day" (mỗi ngày) là cụm từ đúng.' },
+            { question_number: 13, question: 'Điền vào chỗ trống số (13): My teacher, ______ is a professional musician, says that I am getting much better.', option_a: 'A. who', option_b: 'B. which', option_c: 'C. whose', option_d: 'D. that', correct_answer: 'A. who', feedback: '"Who" là đại từ quan hệ thay thế cho người (my teacher).' },
+            { question_number: 14, question: 'Điền vào chỗ trống số (14): My goal is to play ______ a band one day.', option_a: 'A. with', option_b: 'B. on', option_c: 'C. in', option_d: 'D. for', correct_answer: 'C. in', feedback: '"In a band" (trong một ban nhạc) là cụm từ đúng.' },
+            { question_number: 15, question: 'Điền vào chỗ trống số (15): I think it is important to have a hobby, ______ it helps you relax and be creative.', option_a: 'A. because', option_b: 'B. so', option_c: 'C. but', option_d: 'D. and', correct_answer: 'A. because', feedback: '"Because" (bởi vì) dùng để chỉ lý do.' },
+            { question_number: 16, question: 'Điền vào chỗ trống số (16): I am writing to tell ______ about my new job.', option_a: 'A. you', option_b: 'B. your', option_c: 'C. about', option_d: 'D. me', correct_answer: 'A. you', feedback: '"Tell you" (kể cho bạn) là cụm động từ đúng.' },
+            { question_number: 17, question: 'Điền vào chỗ trống số (17): The people ______ I work are very friendly.', option_a: 'A. who', option_b: 'B. which', option_c: 'C. whom', option_d: 'D. with whom', correct_answer: 'D. with whom', feedback: '"With whom" là đại từ quan hệ dùng để thay thế cho người và đi sau giới từ.' },
+            { question_number: 18, question: 'Điền vào chỗ trống số (18): My boss is very kind, ______ he always gives me a free coffee.', option_a: 'A. so', option_b: 'B. but', option_c: 'C. because', option_d: 'D. and', correct_answer: 'A. so', feedback: '"So" (vì vậy) dùng để chỉ kết quả.' },
+            { question_number: 19, question: 'Điền vào chỗ trống số (19): I am looking ______ to seeing you soon.', option_a: 'A. up', option_b: 'B. for', option_c: 'C. forward', option_d: 'D. out', correct_answer: 'C. forward', feedback: '"Look forward to" (mong đợi) là một cụm động từ cố định.' },
+            { question_number: 20, question: 'Điền vào chỗ trống số (20): I hope you can come to my party ______ Saturday.', option_a: 'A. on', option_b: 'B. at', option_c: 'C. in', option_d: 'D. by', correct_answer: 'A. on', feedback: '"On" là giới từ dùng với ngày trong tuần.' },
+            { question_number: 21, question: 'Điền vào chỗ trống số (21): Exercise helps to keep ______ body strong.', option_a: 'A. your', option_b: 'B. my', option_c: 'C. their', option_d: 'D. your', correct_answer: 'A. your', feedback: '"Your body" (cơ thể của bạn) là cụm từ đúng.' },
+            { question_number: 22, question: 'Điền vào chỗ trống số (22): Experts recommend that we do at ______ 30 minutes of exercise every day.', option_a: 'A. all', option_b: 'B. best', option_c: 'C. least', option_d: 'D. most', correct_answer: 'C. least', feedback: '"At least" (ít nhất) là cụm từ đúng.' },
+            { question_number: 23, question: 'Điền vào chỗ trống số (23): The most important thing is to ______ active.', option_a: 'A. be', option_b: 'B. being', option_c: 'C. to be', option_d: 'D. been', correct_answer: 'A. be', feedback: '"To be active" (trở nên năng động) là cụm từ đúng.' },
+            { question_number: 24, question: 'Điền vào chỗ trống số (24): Many people find it difficult to exercise ______ they are too busy.', option_a: 'A. because', option_b: 'B. so', option_c: 'C. but', option_d: 'D. although', correct_answer: 'A. because', feedback: '"Because" (bởi vì) dùng để chỉ nguyên nhân.' },
+            { question_number: 25, question: 'Điền vào chỗ trống số (25): If you make time for it, you will feel ______ more energetic and happy.', option_a: 'A. so', option_b: 'B. much', option_c: 'C. very', option_d: 'D. too', correct_answer: 'B. much', feedback: '"Much more" (hơn nhiều) là cụm từ đúng.' }
+        ];
+
+        let draggedItem = null;
+
+        document.addEventListener('DOMContentLoaded', () => {
+            renderQuiz();
+            setupEventListeners();
+        });
+
+        function renderQuiz() {
+            const quizContainer = document.getElementById('quiz-container');
+            quizContainer.innerHTML = '';
+            quizData.forEach(q => {
+                const questionElement = document.createElement('div');
+                questionElement.classList.add('p-6', 'bg-gray-50', 'rounded-xl', 'shadow-md', 'border', 'border-gray-200');
+
+                const questionText = document.createElement('p');
+                questionText.classList.add('text-lg', 'font-medium', 'text-gray-700', 'mb-4');
+                questionText.textContent = q.question_number + '. ' + q.question;
+                questionElement.appendChild(questionText);
+
+                const optionsContainer = document.createElement('div');
+                optionsContainer.classList.add('options-container', 'flex', 'flex-col', 'sm:flex-row', 'sm:flex-wrap', 'gap-4', 'justify-between');
+
+                const options = [q.option_a, q.option_b, q.option_c, q.option_d];
+                // Xáo trộn các đáp án để không bị cố định
+                options.sort(() => Math.random() - 0.5);
+
+                options.forEach(option => {
+                    const optionElement = document.createElement('div');
+                    optionElement.classList.add('draggable', 'p-3', 'bg-white', 'rounded-lg', 'shadow-sm', 'border', 'border-gray-200', 'flex-1', 'text-center', 'font-medium', 'text-gray-800');
+                    optionElement.textContent = option;
+                    optionElement.setAttribute('draggable', true);
+                    optionElement.dataset.value = option; // Lưu giá trị của đáp án
+                    optionsContainer.appendChild(optionElement);
+                });
+
+                const dropzone = document.createElement('div');
+                dropzone.classList.add('dropzone', 'p-6', 'bg-gray-100', 'rounded-lg', 'text-center', 'min-h-16', 'flex', 'items-center', 'justify-center', 'text-gray-500', 'mt-4');
+                dropzone.textContent = 'Kéo đáp án vào đây...';
+                dropzone.dataset.correctAnswer = q.correct_answer;
+                
+                questionElement.appendChild(optionsContainer);
+                questionElement.appendChild(dropzone);
+                quizContainer.appendChild(questionElement);
+            });
+        }
+
+        function setupEventListeners() {
+            const quizContainer = document.getElementById('quiz-container');
+
+            quizContainer.addEventListener('dragstart', (e) => {
+                if (e.target.classList.contains('draggable')) {
+                    draggedItem = e.target;
+                    e.target.classList.add('opacity-50');
+                }
+            });
+
+            quizContainer.addEventListener('dragend', (e) => {
+                if (e.target.classList.contains('draggable')) {
+                    e.target.classList.remove('opacity-50');
+                }
+            });
+
+            quizContainer.addEventListener('dragover', (e) => {
+                const dropzone = e.target.closest('.dropzone');
+                if (dropzone) {
+                    e.preventDefault();
+                    dropzone.classList.add('drag-over');
+                }
+            });
+
+            quizContainer.addEventListener('dragleave', (e) => {
+                const dropzone = e.target.closest('.dropzone');
+                if (dropzone) {
+                    dropzone.classList.remove('drag-over');
+                }
+            });
+
+            quizContainer.addEventListener('drop', (e) => {
+                e.preventDefault();
+                const dropzone = e.target.closest('.dropzone');
+                if (dropzone && draggedItem) {
+                    // Tìm phần tử draggable đã có trong dropzone
+                    const existingItem = dropzone.querySelector('.draggable');
+                    
+                    if (existingItem) {
+                        // Di chuyển phần tử cũ về vị trí ban đầu
+                        const originalContainer = existingItem.closest('.p-6').querySelector('.options-container');
+                        if (originalContainer) {
+                             originalContainer.appendChild(existingItem);
+                             existingItem.classList.remove('correct', 'incorrect');
+                        }
+                    }
+
+                    // Gắn phần tử mới vào dropzone
+                    dropzone.innerHTML = ''; // Xóa placeholder text
+                    dropzone.classList.remove('drag-over');
+                    dropzone.appendChild(draggedItem);
+                }
+            });
+
+            document.getElementById('check-btn').addEventListener('click', () => {
+                checkAnswers();
+            });
+
+            document.getElementById('reset-btn').addEventListener('click', () => {
+                resetQuiz();
+            });
+        }
+
+        function checkAnswers() {
+            const dropzones = document.querySelectorAll('.dropzone');
+            let correctCount = 0;
+
+            dropzones.forEach((dropzone, index) => {
+                // Xóa phản hồi cũ trước khi kiểm tra
+                const oldFeedback = dropzone.querySelector('.feedback');
+                if (oldFeedback) oldFeedback.remove();
+                
+                const droppedItem = dropzone.querySelector('.draggable');
+                const correctAnswer = dropzone.dataset.correctAnswer;
+                
+                const feedbackDiv = document.createElement('p');
+                feedbackDiv.classList.add('text-sm', 'mt-2', 'font-normal');
+
+                if (droppedItem && droppedItem.dataset.value === correctAnswer) {
+                    dropzone.classList.add('correct');
+                    dropzone.classList.remove('incorrect');
+                    droppedItem.classList.add('correct');
+                    droppedItem.classList.remove('incorrect');
+                    feedbackDiv.classList.add('text-green-700', 'feedback');
+                    feedbackDiv.textContent = 'Đúng rồi!';
+                    correctCount++;
+                } else {
+                    dropzone.classList.add('incorrect');
+                    dropzone.classList.remove('correct');
+                    if (droppedItem) {
+                        droppedItem.classList.add('incorrect');
+                        droppedItem.classList.remove('correct');
+                    }
+                    feedbackDiv.classList.add('text-red-700', 'feedback');
+                    feedbackDiv.textContent = `Sai. Đáp án đúng là: ${correctAnswer}.`;
+                }
+                
+                // Thêm phản hồi giải thích
+                const feedbackText = quizData[index].feedback;
+                const explainFeedback = document.createElement('p');
+                explainFeedback.classList.add('text-sm', 'mt-1', 'text-gray-500', 'feedback');
+                explainFeedback.textContent = feedbackText;
+
+                dropzone.appendChild(feedbackDiv);
+                dropzone.appendChild(explainFeedback);
+            });
+
+            const resultContainer = document.getElementById('result-container');
+            resultContainer.textContent = `Bạn đã trả lời đúng ${correctCount} / ${quizData.length} câu.`;
+            resultContainer.classList.remove('text-green-600', 'text-red-600');
+            if (correctCount === quizData.length) {
+                resultContainer.classList.add('text-green-600');
+            } else {
+                resultContainer.classList.add('text-red-600');
+            }
+        }
+
+        function resetQuiz() {
+            const quizContainer = document.getElementById('quiz-container');
+            quizContainer.innerHTML = '';
+            document.getElementById('result-container').textContent = '';
+            renderQuiz();
+        }
+    </script>
+</body>
+</html>
